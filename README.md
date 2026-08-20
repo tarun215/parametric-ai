@@ -163,10 +163,10 @@ python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 ```bash
 npm run dev
 ```
+Deployment Phase
+*****yet to deploye
 
-Visit the application in your browser:
-- 🌐 **Web UI**: [http://localhost:5173](http://localhost:5173)
-- 📚 **API Docs (Swagger UI)**: [http://localhost:8000/docs](http://localhost:8000/docs)
+
 
 ---
 
