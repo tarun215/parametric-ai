@@ -1,0 +1,411 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Park UI Dark Zinc Theme Palette */
+  --bg-app: #09090b;
+  --bg-subtle: #0f1015;
+  --bg-surface: #14151a;
+  --bg-surface-hover: #1b1d24;
+  --bg-surface-active: #22252e;
+  --bg-elevated: #1f222b;
+  --bg-glass: rgba(18, 20, 26, 0.78);
+
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: #232630;
+  --border-hover: #333845;
+  --border-focus: #00f2fe;
+
+  --text-primary: #fafafa;
+  --text-secondary: #9da3af;
+  --text-muted: #646a78;
+  --text-faint: #444955;
+
+  /* Accent Colors */
+  --accent-cyan: #00f2fe;
+  --accent-blue: #3b82f6;
+  --accent-indigo: #6366f1;
+  --accent-purple: #8b5cf6;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+
+  /* Shadows & Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px -2px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 12px 32px -4px rgba(0, 0, 0, 0.65);
+  --shadow-glow-cyan: 0 0 25px rgba(0, 242, 254, 0.22);
+  --shadow-glow-emerald: 0 0 25px rgba(16, 185, 129, 0.22);
+
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-image: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 242, 254, 0.04), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(99, 102, 241, 0.03), transparent);
+}
+
+/* ── Park UI Card & Panel Containers ───────────────────────────────────────── */
+.park-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.park-card-interactive {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.park-card-interactive:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.park-card-glow {
+  background: var(--bg-surface);
+  border: 1px solid rgba(0, 242, 254, 0.35);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glow-cyan);
+}
+
+/* ── Park UI Buttons ───────────────────────────────────────────────────────── */
+.park-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  user-select: none;
+  outline: none;
+}
+
+.park-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.park-btn-primary {
+  background: #fafafa;
+  color: #09090b;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.park-btn-primary:hover:not(:disabled) {
+  background: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+.park-btn-accent {
+  background: linear-gradient(135deg, #00f2fe 0%, #3b82f6 100%);
+  color: #000000;
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 2px 14px rgba(0, 242, 254, 0.35);
+}
+
+.park-btn-accent:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(0, 242, 254, 0.55);
+}
+
+.park-btn-secondary {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+}
+
+.park-btn-secondary:hover:not(:disabled) {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-hover);
+  color: #ffffff;
+}
+
+.park-btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+}
+
+.park-btn-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.park-btn-sm {
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  border-radius: var(--radius-sm);
+}
+
+.park-btn-icon {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Park UI Segmented Tabs ────────────────────────────────────────────────── */
+.park-tabs-track {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-default);
+  padding: 4px;
+  border-radius: var(--radius-lg);
+  overflow-x: auto;
+}
+
+.park-tab-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.park-tab-trigger:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.park-tab-trigger.active {
+  background: var(--bg-surface-hover);
+  color: #ffffff;
+  border: 1px solid var(--border-hover);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Park UI Badges & Status Pills ─────────────────────────────────────────── */
+.park-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.park-badge-emerald {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.park-badge-emerald .badge-dot {
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.park-badge-amber {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+.park-badge-amber .badge-dot {
+  background: #f59e0b;
+  box-shadow: 0 0 6px #f59e0b;
+}
+
+.park-badge-cyan {
+  background: rgba(0, 242, 254, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(0, 242, 254, 0.25);
+}
+.park-badge-cyan .badge-dot {
+  background: #00f2fe;
+  box-shadow: 0 0 6px #00f2fe;
+}
+
+.park-badge-purple {
+  background: rgba(139, 92, 246, 0.12);
+  color: #c084fc;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+.park-badge-purple .badge-dot {
+  background: #8b5cf6;
+}
+
+.park-badge-neutral {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+}
+
+/* ── Park UI Form Controls ─────────────────────────────────────────────────── */
+.park-input {
+  width: 100%;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  outline: none;
+  transition: all 0.18s ease;
+}
+
+.park-input:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 2px rgba(0, 242, 254, 0.15);
+  background: var(--bg-surface);
+}
+
+.park-input::placeholder {
+  color: var(--text-muted);
+}
+
+.park-select {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.park-select:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 2px rgba(0, 242, 254, 0.15);
+}
+
+/* ── Park UI Tables ────────────────────────────────────────────────────────── */
+.park-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.85rem;
+}
+
+.park-table th {
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.park-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.park-table tr:last-child td {
+  border-bottom: none;
+}
+
+.park-table tr:hover td {
+  background: var(--bg-surface-hover);
+}
+
+/* ── SpecLens Bounding Box Highlight ───────────────────────────────────────── */
+.speclens-anchor-active {
+  background: rgba(0, 242, 254, 0.1);
+  border: 1.5px solid var(--accent-cyan) !important;
+  box-shadow: 0 0 16px rgba(0, 242, 254, 0.35);
+}
+
+/* ── Utility Animations & Scrollbars ───────────────────────────────────────── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 8px rgba(0, 242, 254, 0.3); }
+  100% { box-shadow: 0 0 20px rgba(0, 242, 254, 0.75); }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
+}
