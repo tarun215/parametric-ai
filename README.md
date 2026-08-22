@@ -171,22 +171,47 @@ Visit the application in your browser:
 
 ---
 
+## 📈 Specification v2: Scalability, Efficiency & Accuracy
+
+### 1. Product-Level Unit of Work & Canonical Deduplication
+- Throughput scales with **unique canonical products**, not raw row count.
+- A 10,000-row catalog with 90% supplier duplication performs **~1,000 units of real enrichment work**, fanning back out to 10,000 rows during export.
+- Streaming ingestion (`DatasetStreamer`) computes null rates, cardinalities, and semantic roles in a single bounded-memory pass.
+
+### 2. 2-Tier Caching & Crash Resilience
+- **Tier 1 (Source Cache)**: Keyed by `URL` and `SHA256(content)`.
+- **Tier 2 (Product Cache)**: Keyed by `canonical_product_key`.
+- SQLite/DB-backed `processing_checkpoints` table keyed by `(job_id, canonical_key)` guarantees instant resume-after-crash without reprocessing completed products.
+
+### 3. Rule-Based Extraction Before AI
+- **Tier 1**: Structured JSON-LD / Schema.org property extraction.
+- **Tier 2**: Deterministic HTML table (`<table>`, `<dl>`) and regex pattern rules (`Voltage: 120V`, `Speed: 12250 RPM`).
+- **Tier 3 (AI Residual)**: Gemini Flash LLM invoked strictly for residual ambiguous fields.
+
+### 4. 0% Fabrication Verbatim Invariant & Review Queue
+- Every AI-extracted field is required to return a `verbatim_span`.
+- Post-extraction validator verifies that the verbatim span is present in the source text; ungrounded fields are discarded with confidence = 0.
+- Checksums validate UPC-A, EAN-13, and GTIN-14 barcodes (Modulo-10).
+- Flagged items (low confidence, conflicts, failed sanity checks) surface in the interactive **Human-in-the-Loop Review Queue**.
+
+---
+
 ## 🧪 Testing & Validation Suites
 
-Parametric AI includes automated verification suites covering large-scale ingestion, zero-truncation assertions, and query-first retrieval:
+Parametric AI includes automated verification suites covering large-scale ingestion, zero-truncation assertions, and Specification v2 benchmarks:
 
 ```bash
-# 1. Test 1,000+ Row Dataset Ingestion & QA (2,500 data rows)
+# 1. Test Specification v2 Master Test Suite (All 10 Verification Areas)
+python -m backend.tests.test_v2_spec
+
+# 2. Test Synthetic Scale & Deduplication Benchmark (1,000+ rows)
+python -m backend.tests.test_scale_benchmark
+
+# 3. Test 1,000+ Row Dataset Ingestion & QA (2,500 data rows)
 python test_large_dataset_qa.py
 
-# 2. Test 1,000+ Column Wide Dataset Ingestion & QA (1,050 columns)
+# 4. Test 1,000+ Column Wide Dataset Ingestion & QA (1,050 columns)
 python test_large_columns_dataset_qa.py
-
-# 3. Test Dataset Chat & Query-First Retrieval
-python test_chat_dataset.py
-
-# 4. Dry Run Full Catalog Pipeline
-python dry_run_test.py
 ```
 
 ---
@@ -195,13 +220,15 @@ python dry_run_test.py
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/` | Service health and active product counts |
-| `GET` | `/api/products` | Retrieve all active catalog products |
-| `POST` | `/api/analyze` | Perform unit normalization, truth reconciliation & SpecLens extraction |
-| `POST` | `/api/upload_dataset` | Ingest arbitrary CSV/Excel datasets without row or column limits |
+| `GET` | `/` | Service health, active product counts & v2 specification metadata |
+| `POST` | `/api/process_evaluator_dataset` | Evaluator batch pipeline generating downloadable 252-column Unilog Excel deliverable |
+| `POST` | `/api/process_evaluator_dataset_json` | Evaluator batch pipeline returning enriched JSON and Specification v2 observability metrics |
+| `GET` | `/api/jobs/{job_id}/metrics` | Real-time observability: queue depth, throughput, AI invocation %, cache hit %, dedup ratio |
+| `GET` | `/api/jobs/{job_id}/review` | Human-in-the-loop review queue for flagged products requiring verification |
+| `POST` | `/api/jobs/{job_id}/review/action` | Apply human review decision (ACCEPT, CORRECT, REJECT) with live cache write-back |
+| `POST` | `/api/profile_dataset_stream` | Streaming single-pass dataset profiler for arbitrarily large CSV/Excel files |
 | `POST` | `/api/chat_dataset` | Dataset-wide query-first QA across all indexed rows and columns |
-| `POST` | `/api/process_evaluator_dataset` | Evaluator batch pipeline generating 252-column Unilog Excel deliverable |
-| `POST` | `/api/update_attribute` | Human-in-the-loop attribute modification and audit update |
+| `POST` | `/api/test_api_key` | Validate Google Gemini Flash API key connectivity |
 
 ---
 

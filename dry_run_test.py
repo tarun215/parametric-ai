@@ -126,7 +126,7 @@ def _run_pipeline():
     from backend.pipeline import process_catalog_batch
     df_in = pd.read_csv(io.StringIO(MOCK_CSV))
     print(f"  {INFO}  Input:  {len(df_in)} rows x {len(df_in.columns)} cols")
-    df_out = process_catalog_batch(df_in)
+    df_out, metrics = process_catalog_batch(df_in)
     print(f"  {INFO}  Output: {df_out.shape[0]} rows x {df_out.shape[1]} cols")
     assert df_out.shape[1] == 252, f"Expected 252 cols, got {df_out.shape[1]}"
     assert df_out.shape[0] > 0,   "Output DataFrame has 0 rows"

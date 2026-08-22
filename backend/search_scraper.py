@@ -1,7 +1,8 @@
 """
 search_scraper.py — Parametric AI
 Autonomous web sourcing: DuckDuckGo search + HTML scraper.
-Safe, robust discovery using strict SafeSearch, OEM Domain Locking, and standard TLD validation.
+Safe, robust discovery using strict SafeSearch, OEM Domain prioritization, and technical resource validation.
+Never fabricates, infers, or guesses URLs. If not found, outputs 'URL Not Found'.
 """
 
 import logging
@@ -13,18 +14,19 @@ from duckduckgo_search import DDGS
 
 logger = logging.getLogger(__name__)
 
-# ── 1. Marketplaces, Social Media, and News Sites to Exclude ───────────────
+# ── 1. Marketplaces, Social Media, and Non-Technical Sites to Exclude ───────────────
 NON_INDUSTRIAL_DOMAINS = [
     "amazon.", "ebay.", "walmart.", "target.", "bestbuy.", "flipkart.",
-    "homedepot.", "lowes.", "grainger.", "zoro.", "globalindustrial.",
     "alibaba.", "aliexpress.", "etsy.", "overstock.", "costco.",
-    "uline.", "mcmaster.", "fastenal.", "webstaurantstore.",
-    "youtube.", "instagram.", "facebook.", "twitter.", "tiktok.", "pinterest.",
-    "bbc.", "cnn.", "wikipedia.", "yahoo.", "news.", "reddit."
+    "youtube.", "instagram.", "facebook.", "twitter.", "x.com", "tiktok.", "pinterest.",
+    "bbc.", "cnn.", "wikipedia.", "yahoo.", "news.", "reddit.", "quora."
 ]
 
-# ── 2. Trusted Standard TLDs (Blocks generic/spam internet extensions) ───────
-ALLOWED_TLDS = {".com", ".org", ".net", ".io", ".co", ".us", ".ca", ".de", ".uk", ".in", ".edu", ".gov"}
+# ── 2. Trusted Standard TLDs ───────
+ALLOWED_TLDS = {
+    ".com", ".org", ".net", ".io", ".co", ".us", ".ca", ".de", ".uk", ".in",
+    ".edu", ".gov", ".eu", ".tech", ".info", ".biz"
+}
 
 _SCRAPE_HEADERS = {
     "User-Agent": (
@@ -37,7 +39,7 @@ _SCRAPE_HEADERS = {
 }
 
 _SCRAPE_TIMEOUT = 10
-_MAX_PAGE_TEXT_CHARS = 7000
+_MAX_PAGE_TEXT_CHARS = 8000
 _MAX_DDG_RESULTS = 10
 
 
@@ -46,24 +48,23 @@ def _extract_core_brand(manufacturer: str, mpn: str) -> str:
     mfr = manufacturer or ""
     # Remove parentheses and corporate suffixes
     clean = re.sub(r"\(.*?\)", "", mfr).lower()
-    clean = re.sub(r"\b(inc|llc|corp|company)\b", "", clean).strip()
+    clean = re.sub(r"\b(inc|llc|corp|corporation|company|co|gmbh|ltd|limited|holdings)\b", "", clean).strip()
     slug = re.sub(r"[^a-z0-9]", "", clean)
-    
+
     # Check for prefix brands in MPN like "3MABR-1234" -> "3m"
     if "-" in mpn:
         prefix = mpn.split("-")[0].lower()
-        if prefix.startswith("3m"):
-            return "3m"
-            
-    return slug if len(slug) > 2 else "industrial-supply"
+        if prefix.startswith("3m") or prefix in ("dewalt", "milw", "bosch"):
+            return prefix
+
+    return slug if len(slug) >= 2 else "industrial-supply"
 
 
-def _is_safe_industrial_source(url: str, brand_slug: str) -> bool:
+def _is_safe_industrial_source(url: str, brand_slug: str = "") -> bool:
     """
-    Validates that a URL is a legitimate resource:
-    1. Excludes consumer marketplaces and social media.
-    2. Must end in a standard trusted TLD.
-    3. The domain MUST contain the brand name.
+    Validates that a URL is a legitimate product or technical resource:
+    1. Excludes consumer marketplaces, social media, and spam.
+    2. Ends in a valid standard TLD.
     """
     if not url or not url.startswith("http"):
         return False
@@ -71,19 +72,14 @@ def _is_safe_industrial_source(url: str, brand_slug: str) -> bool:
     try:
         parsed = urlparse(url)
         netloc = parsed.netloc.lower()
-        
-        # Block marketplaces, social media, and irrelevant sites
+
+        # Block consumer shopping/social junk
         if any(bad_site in netloc for bad_site in NON_INDUSTRIAL_DOMAINS):
             return False
 
-        # Ensure root domain ends with a standard institutional/commercial TLD
-        if not any(netloc.endswith(tld) for tld in ALLOWED_TLDS):
+        # Ensure standard commercial / institutional domain
+        if not any(netloc.endswith(tld) or f"{tld}/" in url.lower() for tld in ALLOWED_TLDS):
             return False
-
-        # THE OEM LOCK: Force the domain to actually contain the brand name
-        if brand_slug and brand_slug != "industrial-supply":
-            if brand_slug not in netloc:
-                return False
 
         return True
     except Exception:
@@ -103,11 +99,11 @@ def _resolve_pdf_url(href: str, base_url: str) -> str:
     return base_dir.rstrip("/") + "/" + href
 
 
-def _scrape_url(url: str, brand_slug: str) -> dict:
+def _scrape_url(url: str, brand_slug: str = "") -> dict:
     """Fetches and parses technical text and engineering PDFs from a target URL."""
     result = {"page_text": "", "pdfs": [], "images": []}
-    
-    if not _is_safe_industrial_source(url, brand_slug):
+
+    if not url or not url.startswith("http") or not _is_safe_industrial_source(url, brand_slug):
         return result
 
     try:
@@ -133,6 +129,11 @@ def _scrape_url(url: str, brand_slug: str) -> dict:
         for img in soup.find_all("img", src=True):
             src = img["src"].strip()
             if any(src.lower().endswith(ext) for ext in (".jpg", ".jpeg", ".png", ".webp")):
+                if src.startswith("//"):
+                    src = "https:" + src
+                elif src.startswith("/"):
+                    m = re.match(r"(https?://[^/]+)", resp.url)
+                    src = (m.group(1) if m else "") + src
                 if src.startswith("http") and src not in result["images"]:
                     result["images"].append(src)
 
@@ -142,27 +143,44 @@ def _scrape_url(url: str, brand_slug: str) -> dict:
     return result
 
 
-def search_product_sources(manufacturer: str, mpn: str) -> dict:
+def search_product_sources(manufacturer: str, mpn: str, part_desc: str = "") -> dict:
     """
-    Autonomous discovery using Strict DuckDuckGo Filtering and OEM domain fallbacks.
+    Autonomous discovery using DuckDuckGo Search and OEM domain prioritisation for ANY dataset.
+    Never fabricates, infers, or guesses URLs. If no URL found, returns 'URL Not Found'.
     """
     output = {
-        "mfr_url": "",
+        "mfr_url": "URL Not Found",
         "ref_urls": [],
         "page_text": "",
         "pdfs": [],
         "images": [],
     }
 
-    # Extract clean brand slug (e.g., "freud", "3m", "whirlpool")
-    brand_slug = _extract_core_brand(manufacturer, mpn)
+    clean_mpn = str(mpn or "").strip()
+    clean_mfg = str(manufacturer or "").replace("-- Unbranded --", "").replace("-- No Unilog Brand --", "").replace("-- No DIB Brand --", "").strip()
+    clean_desc = str(part_desc or "").strip()
+    brand_slug = _extract_core_brand(clean_mfg, clean_mpn)
 
-    # Broadened search queries to ensure real results are returned
-    queries = [
-        f'"{brand_slug}" "{mpn}" product support OR specifications',
-        f'"{brand_slug}" "{mpn}" technical specifications',
-        f'"{mpn}" specification sheet filetype:pdf'
-    ]
+    # Multi-strategy search queries
+    queries = []
+    if clean_mfg and brand_slug != "industrial-supply":
+        queries.extend([
+            f'"{clean_mfg}" "{clean_mpn}" specifications OR datasheet',
+            f'"{clean_mfg}" "{clean_mpn}" product page',
+            f'{clean_mfg} {clean_mpn} {clean_desc[:30]} datasheet'
+        ])
+    elif clean_desc:
+        queries.extend([
+            f'"{clean_mpn}" {clean_desc[:40]} specifications',
+            f'"{clean_mpn}" technical specifications datasheet',
+            f'"{clean_mpn}" datasheet filetype:pdf'
+        ])
+    else:
+        queries.extend([
+            f'"{clean_mpn}" technical specifications datasheet',
+            f'"{clean_mpn}" datasheet filetype:pdf',
+            f'{clean_mpn} product support specifications'
+        ])
 
     valid_urls = []
 
@@ -171,40 +189,38 @@ def search_product_sources(manufacturer: str, mpn: str) -> dict:
             break
         try:
             with DDGS() as ddgs:
-                # Enforce Strict SafeSearch at the search engine level
                 results = ddgs.text(query, max_results=_MAX_DDG_RESULTS, safesearch="strict")
-                
                 for r in (results or []):
                     href = r.get("href", "")
-                    # Apply the OEM Domain Lock
                     if href and _is_safe_industrial_source(href, brand_slug) and href not in valid_urls:
-                        valid_urls.append(href)
+                        # Prioritize OEM/Brand matching URLs at the top
+                        if brand_slug != "industrial-supply" and brand_slug in href.lower():
+                            valid_urls.insert(0, href)
+                        else:
+                            valid_urls.append(href)
         except Exception as exc:
-            logger.warning("Discovery query error: %s", exc)
+            logger.warning("Discovery query error for query '%s': %s", query, exc)
 
-    # Smart OEM Fallback if search engine fails entirely
     if not valid_urls:
-        valid_urls = [
-            f"https://www.{brand_slug}.com/products/{mpn}",
-            f"https://www.{brand_slug}.com/specs/{mpn}-datasheet.pdf",
-            f"https://www.{brand_slug}.com/catalog/{mpn}",
-            f"https://www.{brand_slug}.com/support/{mpn}",
-            f"https://www.{brand_slug}.com/documentation/{mpn}"
-        ]
+        output["mfr_url"] = "URL Not Found"
+        output["ref_urls"] = []
+        return output
 
     output["mfr_url"] = valid_urls[0]
     output["ref_urls"] = valid_urls[1:6]
 
-    # Pass the brand_slug into the scraper to ensure redirects stay locked
+    # Scrape primary URL
     scraped = _scrape_url(valid_urls[0], brand_slug)
     output["page_text"] = scraped["page_text"]
     output["pdfs"] = scraped["pdfs"]
     output["images"] = scraped["images"]
 
+    # If page text is thin, scrape second valid URL
     if not output["page_text"].strip() and len(valid_urls) > 1:
         scraped2 = _scrape_url(valid_urls[1], brand_slug)
-        output["page_text"] = scraped2["page_text"]
-        output["pdfs"] = output["pdfs"] or scraped2["pdfs"]
-        output["images"] = output["images"] or scraped2["images"]
+        if scraped2["page_text"]:
+            output["page_text"] = scraped2["page_text"]
+        output["pdfs"] = list(dict.fromkeys(output["pdfs"] + scraped2["pdfs"]))
+        output["images"] = list(dict.fromkeys(output["images"] + scraped2["images"]))
 
     return output
