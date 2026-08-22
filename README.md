@@ -5,7 +5,7 @@
 [![Vite](https://img.shields.io/badge/Vite-8.0-646CFF?style=flat&logo=vite&logoColor=white)](https://vitejs.dev)
 [![Gemini 1.5 Flash](https://img.shields.io/badge/Google%20Gemini-1.5%20%2F%202.0%20Flash-4285F4?style=flat&logo=google&logoColor=white)](https://ai.google.dev)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 
 > **Autonomous industrial product data enrichment, visual spatial provenance, truth reconciliation, and zero-truncation dataset reasoning engine for modern industrial commerce.**
 
@@ -231,7 +231,3 @@ python test_large_columns_dataset_qa.py
 | `POST` | `/api/test_api_key` | Validate Google Gemini Flash API key connectivity |
 
 ---
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
